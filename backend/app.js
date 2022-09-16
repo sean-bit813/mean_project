@@ -1,7 +1,19 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const app = express();
+const mongoose = require("mongoose");
+//SMQltVrMyZf6WtGA
 
+const Post = require('./models/post');
+var ObjectId = require('mongodb').ObjectID;
+
+mongoose.connect("mongodb+srv://Baohui:SMQltVrMyZf6WtGA@cluster0.oengktb.mongodb.net/?retryWrites=true&w=majority")
+.then(()=>{
+  console.log("connected to db")
+})
+.catch(()=>{
+  console.log("failed")
+})
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -22,24 +34,37 @@ app.use((req, res, next) => {
 
 
 app.post("/api/posts", (req, res, next) => {
-    const post = req.body;
-    console.log(post);
-    res.status(201).json({
-        message: 'Post added'
-    });
+  const post = new Post({
+    title: req.body.title,
+    content: req.body.content
+  });
 
+  post.save().then(result => {
+    res.status(201).json({
+        message: 'Post added',
+        postId: result._id
+    });
+  });
 });
 
 
 app.get('/api/posts',(req, res, next) => {
- const posts = [
-    { id: '', title: 'asc', content:'adbqah'},
-    { id: '', title: 'ascasd', content:'adbqahasd'},
- ];
- res.status(200).json({
+  Post.find()
+  .then(documents => {
+    res.status(200).json({
     message: 'Posts good',
-    posts: posts
+    posts: documents
  });
+  });
 });
+
+app.delete("/api/posts/:id",  (req, res, next) =>{
+  console.log(req.params.id);
+  Post.deleteOne({_id: ObjectId.createFromHexString(req.params.id)}).then(result => {
+    console.log(result);
+    res.status(200).json({message: 'Post deleted'});
+  });
+})
+
 
 module.exports = app;
